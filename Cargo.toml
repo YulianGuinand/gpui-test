@@ -1,0 +1,43 @@
+[package]
+name = "my_gpui_mobile"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# GPUI snapshot aligned with gpui-kit rev ae6a3fdf and gpui-pre-mobile main.
+gpui = { package = "gpui-pre", version = "=0.3.10", default-features = false }
+# GPUI Kit: component layer only (no icon AssetSource on mobile yet).
+gpui-kit = { git = "https://github.com/longbridge/gpui-kit", rev = "ae6a3fdfef416e7040e773415ac9cbd8c623e5d5", default-features = false, features = ["component"] }
+# Mobile platform (Android NativeActivity / iOS UIKit host).
+gpui-mobile = { package = "gpui-pre-mobile", git = "https://github.com/longbridge/gpui-mobile", rev = "7548ebc4b24f00494af9976af8852c7163ded9ce" }
+log = "0.4"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15"
+android-activity = { version = "0.6", features = ["native-activity"] }
+
+# Debug builds keep framework deps optimized: GPUI in Debug is very slow, which
+# would distort every performance observation made on the emulator.
+# debuginfo is stripped: a full-debuginfo .so is ~750 MB and does not fit the
+# emulator's /data; symbol names are kept so logcat backtraces still resolve.
+[profile.dev]
+strip = "debuginfo"
+
+[profile.dev.package]
+gpui-pre = { opt-level = 3 }
+gpui-component = { opt-level = 3 }
+gpui-base = { opt-level = 3 }
+gpui-kit = { opt-level = 3 }
+rustybuzz = { opt-level = 3 }
+taffy = { opt-level = 3 }
+ttf-parser = { opt-level = 3 }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
